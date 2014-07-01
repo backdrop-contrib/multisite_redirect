@@ -1,0 +1,397 @@
+<?php
+/**
+ * @file
+ * Contains main module functionality.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function multisite_redirect_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#multisite_redirect':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The System module is integral to the site, and provides basic but extensible functionality for use by other modules and themes. Some integral elements of Drupal are contained in and managed by the System module, including caching, enabling and disabling modules and themes, preparing and displaying the administrative page, and configuring fundamental site settings. A number of key system maintenance operations are also part of the System module. For more information, see the online handbook entry for <a href="@system">System module</a>.', array('@system' => 'http://drupal.org/documentation/modules/system')) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Managing modules') . '</dt>';
+      $output .= '<dd>' . t('The System module allows users with the appropriate permissions to enable and disable modules on the <a href="@modules">Modules administration page</a>. Drupal comes with a number of core modules, and each module provides a discrete set of features and may be enabled or disabled depending on the needs of the site. Many additional modules contributed by members of the Drupal community are available for download at the <a href="@drupal-modules">Drupal.org module page</a>.', array('@modules' => url('admin/modules'), '@drupal-modules' => 'http://drupal.org/project/modules')) . '</dd>';
+      $output .= '<dt>' . t('Managing themes') . '</dt>';
+      $output .= '<dd>' . t('The System module allows users with the appropriate permissions to enable and disable themes on the <a href="@themes">Appearance administration page</a>. Themes determine the design and presentation of your site. Drupal comes packaged with several core themes, and additional contributed themes are available at the <a href="@drupal-themes">Drupal.org theme page</a>.', array('@themes' => url('admin/appearance'), '@drupal-themes' => 'http://drupal.org/project/themes')) . '</dd>';
+      $output .= '<dt>' . t('Managing caching') . '</dt>';
+      $output .= '<dd>' . t("The System module allows users with the appropriate permissions to manage caching on the <a href='@cache-settings'>Performance settings page</a>. Drupal has a robust caching system that allows the efficient re-use of previously-constructed web pages and web page components. Pages requested by anonymous users are stored in a compressed format; depending on your site configuration and the amount of your web traffic tied to anonymous visitors, the caching system may significantly increase the speed of your site.", array('@cache-settings' => url('admin/config/development/performance'))) . '</dd>';
+      $output .= '<dt>' . t('Performing system maintenance') . '</dt>';
+      $output .= '<dd>' . t('In order for the site and its modules to continue to operate well, a set of routine administrative operations must run on a regular basis. The System module manages this task by making use of a system cron job. You can verify the status of cron tasks by visiting the <a href="@status">Status report page</a>. For more information, see the online handbook entry for <a href="@handbook">configuring cron jobs</a>. You can set up cron job by visiting <a href="@cron">Cron configuration</a> page', array('@status' => url('admin/reports/status'), '@handbook' => 'http://drupal.org/cron', '@cron' => url('admin/config/system/cron'))) . '</dd>';
+      $output .= '<dt>' . t('Configuring basic site settings') . '</dt>';
+      $output .= '<dd>' . t('The System module also handles basic configuration options for your site, including <a href="@date-time-settings">Date and time settings</a>, <a href="@file-system">File system settings</a>, <a href="@clean-url">Clean URL support</a>, <a href="@site-info">Site name and other information</a>, and a <a href="@maintenance-mode">Maintenance mode</a> for taking your site temporarily offline.', array('@date-time-settings' => url('admin/config/regional/date-time'), '@file-system' => url('admin/config/media/file-system'), '@clean-url' => url('admin/config/search/clean-urls'), '@site-info' => url('admin/config/system/site-information'), '@maintenance-mode' => url('admin/config/development/maintenance'))) . '</dd>';
+      $output .= '<dt>' . t('Configuring actions') . '</dt>';
+      $output .= '<dd>' . t('Actions are individual tasks that the system can do, such as unpublishing a piece of content or banning a user. Modules, such as the <a href="@trigger-help">Trigger module</a>, can fire these actions when certain system events happen; for example, when a new post is added or when a user logs in. Modules may also provide additional actions. Visit the <a href="@actions">Actions page</a> to configure actions.', array('@trigger-help' => url('admin/help/trigger'), '@actions' => url('admin/config/system/actions'))) . '</dd>';
+      $output .= '</dl>';
+      return $output;
+      break;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function multisite_redirect_permission() {
+  return array(
+    'administer multisite redirects' => array(
+      'name' => t('Administer multisite redirects'),
+      'description' => t('Administer multisite redirects'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function multisite_redirect_menu() {
+  $items['admin/config/search/multisite-redirect'] = array(
+    'title' => 'Multisite Redirects',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer multisite redirects'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_admin_form'),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  $items['admin/config/search/multisite-redirect/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('administer multisite redirects'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_admin_form'),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  $items['admin/config/search/multisite-redirect/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_settings_form'),
+    'access arguments' => array('administer multisite redirects'),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  $items['admin/config/search/multisite-redirect/%multisite_redirect'] = array(
+    'title' => 'Edit Redirect',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('administer multisite redirects'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_edit_form', 4),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  $items['admin/config/search/multisite-redirect/add'] = array(
+    'title' => 'Add redirect',
+    'type' => MENU_LOCAL_ACTION,
+    'access arguments' => array('administer multisite redirects'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_edit_form'),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  $items['admin/config/search/multisite-redirect/%multisite_redirect/delete'] = array(
+    'title' => 'Delete Redirect',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('administer multisite redirects'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('multisite_redirect_delete_form', 4),
+    'file' => 'multisite_redirect.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_init().
+ */
+function multisite_redirect_init() {
+  global $base_url;
+  $current = parse_url($base_url);
+  $exclusions = variable_get('multisite_redirect_exclusions');
+  if (empty($exclusions[$current['host']])) {
+    $rules = multisite_redirect_get_rules();
+    if (!empty($rules)) {
+      foreach ($rules as $rule) {
+        if (drupal_match_path(current_path(), $rule->source_path)) {
+          $status_code = ($rule->status_code == 0) ? 301 : $rule->status_code;
+          if (valid_url($rule->redirect, TRUE)) {
+            drupal_goto($rule->redirect, array(), $status_code);
+          }
+          elseif (valid_url($rule->redirect)) {
+            $primary = variable_get('multisite_redirect_primary_site');
+            if (!empty($primary)) {
+              drupal_goto('http://' . $primary . '/' . $rule->redirect, array(), $status_code);
+            }
+          }
+          else {
+            if (user_access('administer multisite redirects')) {
+              drupal_set_message(t('Unable to perform redirect rule, invalid redirect path <strong>%path</strong>.', array('%path' => check_plain($rule->redirect))), 'warning');
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function multisite_redirect_theme($existing, $type, $theme, $path) {
+  return array(
+    'multisite_redirect_rules_table' => array(
+      'render element' => 'element'
+    ),
+  );
+}
+
+/**
+ * Returns a list of all site options for redirects as defined in sites.php.
+ *
+ * @param bool $show_current
+ *   Specify whether or not to return the current site in the list of sites.
+ * @param bool $show_any
+ *   Specify whether or not to return the "any" option in the list of sites.
+ * @return array
+ *   Returns an array of site options.
+ */
+function multisite_redirect_get_sites($show_current = TRUE, $show_any = TRUE) {
+  global $base_url;
+  $current = parse_url($base_url);
+  $conf_path = conf_path();
+  $sites = array();
+  $domains = array($current['host'] => $current['host']);
+  if (file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
+    include(DRUPAL_ROOT . '/sites/sites.php');
+  }
+  foreach ($sites as $domain => $path) {
+    if ('sites/' . $path == $conf_path) {
+      $domains[$domain] = $domain;
+    }
+  }
+  if (!$show_current) {
+    unset($domains[$current['host']]);
+  }
+  return $show_any ? array_merge(array('any' => t('any')), $domains) : $domains;
+}
+
+/**
+ * Delete form submit callback.
+ */
+function multisite_redirect_delete_form_submit($form, &$form_state) {
+  multisite_redirect_delete($form['#redirect']->rid);
+  drupal_set_message(t('Redirect deleted.'));
+  drupal_goto('admin/config/search/multisite-redirect');
+}
+
+/**
+ * Administrative form submit callback.
+ */
+function multisite_redirect_admin_form_submit($form, &$form_state) {
+  foreach ($form['#rules'] as $rule) {
+    $rule->weight = $form_state['values']['multisite_redirect_rules_table'][$rule->rid]['weight'];
+    multisite_redirect_save($rule);
+  }
+}
+
+/**
+ * Edit form vaidation callback.
+ */
+function multisite_redirect_edit_form_validate($form, &$form_state) {
+  if (!valid_url($form_state['values']['redirect'])) {
+    form_set_error('redirect', t('Invalid redirect path.'));
+  }
+}
+
+/**
+ * Edit form submit callback.
+ */
+function multisite_redirect_edit_form_submit($form, &$form_state) {
+  $redirect = array_merge((array) $form['#redirect'], array(
+    'source_site' => $form_state['values']['site'],
+    'source_path' => $form_state['values']['path'],
+    'redirect' => $form_state['values']['redirect'],
+    'status_code' => $form_state['values']['status_code'],
+  ));
+  multisite_redirect_save((object) $redirect);
+  drupal_set_message(t('Redirect rule saved.'));
+  drupal_goto('admin/config/search/multisite-redirect');
+}
+
+/**
+ * Prepares an empty redirect object.
+ *
+ * @param $redirect
+ *   Empty stdObject to be modified.
+ * @param array $defaults
+ *   An array of default values to be merged into the redirect object.
+ */
+function multisite_redirect_object_prepare($redirect, $defaults = array()) {
+  $defaults += array(
+    'rid' => NULL,
+    'source_site' => NULL,
+    'source_path' => NULL,
+    'redirect' => NULL,
+    'language' => LANGUAGE_NONE,
+    'status_code' => 0,
+    'count' => 0,
+    'access' => 0,
+    'weight' => 0,
+  );
+  foreach ($defaults as $key => $default) {
+    if (!isset($redirect->{$key})) {
+      $redirect->{$key} = $default;
+    }
+  }
+}
+
+/**
+ * Saves or updates a redirect rule to the database.
+ *
+ * @param $redirect
+ *   Redirect rule to be saved to the database.
+ * @return DatabaseStatementInterface|int|null
+ *   A new query object for this connection.
+ */
+function multisite_redirect_save($redirect) {
+  if (empty($redirect->rid)) {
+    return db_insert('multisite_redirect')
+      ->fields((array) $redirect)
+      ->execute();
+    }
+  else {
+    return db_update('multisite_redirect')
+      ->fields((array) $redirect)
+      ->condition('rid', $redirect->rid)
+      ->execute();
+  }
+}
+
+/**
+ * Load a redirect rule from the database.
+ *
+ * @param $rid
+ *   The rid of the redirect rule to be
+ * @return array
+ *   Returns a redirect rule.
+ */
+function multisite_redirect_load($rid) {
+  $rules = multisite_redirect_load_multiple(array('rid' => $rid));
+  if (!empty($rules)) {
+    return array_shift($rules);
+  }
+  return NULL;
+}
+
+/**
+ * Load multiple redirect rules from the database.
+ *
+ * @param array $conditions
+ *   An array of database query conditions.
+ * @return mixed
+ *   A new query object for this connection.
+ */
+function multisite_redirect_load_multiple($conditions = array()) {
+  $query = db_select('multisite_redirect')
+    ->fields('multisite_redirect');
+  if (!empty($conditions)) {
+    foreach ($conditions as $field => $value) {
+      $query->condition($field, $value);
+    }
+  }
+  $query->orderBy('weight', 'ASC');
+  $query->orderBy('rid', 'ASC');
+  $result = $query->execute();
+  return $result->fetchAll();
+}
+
+/**
+ * Load all redirect rules for a specific site.
+ *
+ * @param $source_site
+ *   The site to load the rules for.
+ * @param bool $show_any
+ *   True/false whether or not to show rules specified for the "any" option.
+ * @return mixed
+ *   Returns an array of redirect rules.
+ */
+function multisite_redirect_load_by_site($source_site, $show_any = TRUE) {
+  $query = db_select('multisite_redirect')
+    ->fields('multisite_redirect');
+  if ($show_any) {
+    $or = db_or();
+    $or->condition('source_site', $source_site);
+    $or->condition('source_site', 'any');
+    $query->condition($or);
+  }
+  else {
+    $query->condition('source_site', $source_site);
+  }
+  $query->orderBy('weight', 'ASC');
+  $query->orderBy('rid', 'ASC');
+  $result = $query->execute();
+  return $result->fetchAll();
+}
+
+/**
+ * Delete a redirect rule from the database.
+ *
+ * @param $rid
+ *   The rid of the rule to be deleted.
+ * @return DatabaseStatementInterface
+ *   A new DeleteQuery object for this connection.
+ */
+function multisite_redirect_delete($rid) {
+  return db_delete('multisite_redirect')
+    ->condition('rid', $rid)
+    ->execute();
+}
+
+/**
+ * Get the rules for the current site.
+ *
+ * @return mixed
+ *   Returns an array of redirect rules.
+ */
+function multisite_redirect_get_rules() {
+  global $base_url;
+  $current = parse_url($base_url);
+  $rules = &drupal_static(__FUNCTION__, multisite_redirect_load_by_site($current['host']));
+  return $rules;
+}
+
+/**
+ * Theme callback for multisite_redirect_rules_table.
+ */
+function theme_multisite_redirect_rules_table($vars) {
+  $element = $vars['element'];
+  drupal_add_tabledrag('multisite-redirect-rules-table', 'order', 'sibling', 'attribute-weight');
+
+  $header = array(
+    'source_site' => t('Source Site'),
+    'source_path' => t('Source Path'),
+    'redirect' => t('Redirect'),
+    'status_code' => t('Status Code'),
+    'edit' => NULL,
+    'delete' => NULL,
+    'weight' => t('Weight'),
+  );
+
+  $rows = array();
+  foreach (element_children($element) as $key) {
+    $row = array();
+
+    $row['data'] = array();
+    foreach ($header as $fieldname => $title) {
+      $row['data'][] = drupal_render($element[$key][$fieldname]);
+      $row['class'] = array('draggable');
+    }
+    $rows[] = $row;
+  }
+
+  return theme('table', array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'multisite-redirect-rules-table'),
+  ));
+}
