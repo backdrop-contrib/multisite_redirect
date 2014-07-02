@@ -17,11 +17,12 @@ function multisite_redirect_help($path, $arg) {
       $output .= '<p>' . t('After enabling the module, you\'ll need to setup your <strong>sites/sites.php</strong> file by pointing all of the domains that are to be managed by this module, at the primary site. In many cases this may just be "default" if you\'re not running a true multisite setup.') . '</p>';
       $output .= '<h4>' . t('Example sites.php') . '</h4>';
       $output .= '<pre>';
-      $output .= '$site[\'domain1.com\'] = \'default\';' . "\r\n";
-      $output .= '$site[\'domain1.com\'] = \'default\';' . "\r\n";
-      $output .= '$site[\'domain2.com\'] = \'default\';' . "\r\n";
+      $output .= '$sites[\'domain1.com\'] = \'default\';' . "\r\n";
+      $output .= '$sites[\'domain1.com\'] = \'default\';' . "\r\n";
+      $output .= '$sites[\'domain2.com\'] = \'default\';' . "\r\n";
+      $output .= '$sites[\'foobar.domain.com\'] = \'default\';' . "\r\n";
       $output .= '</pre>';
-      $output .= '<p>' . t('In this example URLs from domain1.com, domain2.com, and domain3.com will all be managed by the default site. You can read more about how to setup multisite and your sites.php ' . l(t('here'), 'https://api.drupal.org/api/drupal/sites!example.sites.php/7') . '.') . '</p>';
+      $output .= '<p>' . t('In this example URLs from domain1.com, domain2.com, domain3.com, and foobar.domain.com will all be managed by the default site. You can read more about how to setup multisite and your sites.php ' . l(t('here'), 'https://api.drupal.org/api/drupal/sites!example.sites.php/7') . '.') . '</p>';
       return $output;
   }
 }
