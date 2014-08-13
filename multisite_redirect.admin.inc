@@ -54,7 +54,7 @@ function multisite_redirect_admin_form($form, &$form_state) {
       $form['multisite_redirect_rules_table'][$rule->rid] = array(
         'source_site' => array('#markup' => $rule->source_site),
         'source_path' => array('#markup' => nl2br($rule->source_path)),
-        'redirect' => array('#markup' => $rule->redirect),
+        'redirect' => array('#markup' => check_plain($rule->redirect)),
         'status_code' => array('#markup' => $status_codes[$rule->status_code]),
         'edit' => array('#markup' => l(t('edit'), 'admin/config/search/multisite-redirect/' . $rule->rid)),
         'delete' => array('#markup' => l(t('delete'), 'admin/config/search/multisite-redirect/' . $rule->rid . '/delete', array(
@@ -119,7 +119,7 @@ function multisite_redirect_edit_form($form, &$form_state, $redirect = NULL) {
     '#title' => t('To'),
     '#default_value' => $redirect->redirect,
     '#required' => TRUE,
-    '#description' => t('Enter an internal Drupal path, path alias, or complete external URL (like http://example.com/) to redirect to. Use %front to redirect to the front page.', array('%front' => '<front>')),
+    '#description' => t('Enter an internal Drupal path, path alias, or complete external URL (like http://example.com/) to redirect to. Use %front to redirect to the front page. Use a wildcard(*) to redirect to the primary domain with the current path appended to the end.', array('%front' => '<front>')),
   );
   $form['advanced'] = array(
     '#type' => 'fieldset',

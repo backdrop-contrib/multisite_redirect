@@ -101,28 +101,46 @@ function multisite_redirect_init() {
   global $base_url;
   $current = parse_url($base_url);
   $exclusions = variable_get('multisite_redirect_exclusions');
-  if (empty($exclusions[$current['host']])) {
+  if ($exclusions[$current['host']] === 0) {
     $rules = multisite_redirect_get_rules();
     if (!empty($rules)) {
       foreach ($rules as $rule) {
-        if (drupal_match_path(current_path(), $rule->source_path)) {
-          $status_code = ($rule->status_code == 0) ? 301 : $rule->status_code;
-          if (valid_url($rule->redirect, TRUE)) {
-            drupal_goto($rule->redirect, array(), $status_code);
-          }
-          elseif (valid_url($rule->redirect)) {
-            $primary = variable_get('multisite_redirect_primary_site');
-            if (!empty($primary)) {
-              drupal_goto('http://' . $primary . '/' . $rule->redirect, array(), $status_code);
-            }
-          }
-          else {
-            if (user_access('administer multisite redirects')) {
-              drupal_set_message(t('Unable to perform redirect rule, invalid redirect path <strong>%path</strong>.', array('%path' => check_plain($rule->redirect))), 'warning');
-            }
-          }
+        $alias = drupal_lookup_path('alias', current_path());
+        if (drupal_match_path($alias, $rule->source_path) || drupal_match_path(current_path(), $rule->source_path)) {
+          drupal_alter('redirect_execute', $rule);
+          multisite_redirect_execute($rule);
           break;
         }
+      }
+    }
+  }
+}
+
+/**
+ * Executes the redirect rule.
+ *
+ * @param object $rule
+ */
+function multisite_redirect_execute($rule) {
+  module_invoke_all('redirect_execute', $rule);
+  if (!empty($rule)) {
+    $status_code = ($rule->status_code == 0) ? 301 : $rule->status_code;
+    if (valid_url($rule->redirect, TRUE)) {
+      drupal_goto($rule->redirect, array(), $status_code);
+    }
+    elseif (valid_url($rule->redirect)) {
+      $primary = variable_get('multisite_redirect_primary_site');
+      if (!empty($primary) && $rule->redirect != '*') {
+        drupal_goto('http://' . $primary . '/' . $rule->redirect, array(), $status_code);
+      }
+      elseif (!empty($primary) && $rule->redirect == '*') {
+        $alias = drupal_lookup_path('alias', current_path());
+        drupal_goto('http://' . $primary . '/' . $alias, array(), $status_code);
+      }
+    }
+    else {
+      if (user_access('administer multisite redirects')) {
+        drupal_set_message(t('Unable to perform redirect rule, invalid redirect path <strong>%path</strong>.', array('%path' => check_plain($rule->redirect))), 'warning');
       }
     }
   }
@@ -192,7 +210,7 @@ function multisite_redirect_admin_form_submit($form, &$form_state) {
  * Edit form vaidation callback.
  */
 function multisite_redirect_edit_form_validate($form, &$form_state) {
-  if (!valid_url($form_state['values']['redirect'])) {
+  if (!valid_url($form_state['values']['redirect']) && $form_state['values']['redirect'] != '<front>' && $form_state['values']['redirect'] != '*') {
     form_set_error('redirect', t('Invalid redirect path.'));
   }
 }
@@ -248,12 +266,15 @@ function multisite_redirect_object_prepare($redirect, $defaults = array()) {
  *   A new query object for this connection.
  */
 function multisite_redirect_save($redirect) {
+  drupal_alter('redirect_rule', $redirect);
   if (empty($redirect->rid)) {
+    module_invoke_all('redirect_insert', $redirect);
     return db_insert('multisite_redirect')
       ->fields((array) $redirect)
       ->execute();
     }
   else {
+    module_invoke_all('redirect_update', $redirect);
     return db_update('multisite_redirect')
       ->fields((array) $redirect)
       ->condition('rid', $redirect->rid)
@@ -272,7 +293,9 @@ function multisite_redirect_save($redirect) {
 function multisite_redirect_load($rid) {
   $rules = multisite_redirect_load_multiple(array('rid' => $rid));
   if (!empty($rules)) {
-    return array_shift($rules);
+    $rule = array_shift($rules);
+    module_invoke_all('redirect_load', $rule);
+    return $rule;
   }
   return NULL;
 }
@@ -336,6 +359,7 @@ function multisite_redirect_load_by_site($source_site, $show_any = TRUE) {
  *   A new DeleteQuery object for this connection.
  */
 function multisite_redirect_delete($rid) {
+  module_invoke('redirect_delete', $rid);
   return db_delete('multisite_redirect')
     ->condition('rid', $rid)
     ->execute();
