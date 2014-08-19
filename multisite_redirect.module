@@ -101,7 +101,7 @@ function multisite_redirect_init() {
   global $base_url;
   $current = parse_url($base_url);
   $exclusions = variable_get('multisite_redirect_exclusions');
-  if ($exclusions[$current['host']] === 0) {
+  if (isset($exclusions[$current['host']]) && $exclusions[$current['host']] === 0) {
     $rules = multisite_redirect_get_rules();
     if (!empty($rules)) {
       foreach ($rules as $rule) {
