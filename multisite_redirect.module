@@ -125,6 +125,9 @@ function multisite_redirect_execute($rule) {
   module_invoke_all('redirect_execute', $rule);
   if (!empty($rule)) {
     $status_code = ($rule->status_code == 0) ? 301 : $rule->status_code;
+    $rule->count += 1;
+    $rule->access = time();
+    multisite_redirect_save($rule);
     if (valid_url($rule->redirect, TRUE)) {
       drupal_goto($rule->redirect, array(), $status_code);
     }
@@ -390,6 +393,8 @@ function theme_multisite_redirect_rules_table($vars) {
     'source_path' => t('Source Path'),
     'redirect' => t('Redirect'),
     'status_code' => t('Status Code'),
+    'access' => t('Last access'),
+    'count' => t('Count'),
     'edit' => NULL,
     'delete' => NULL,
     'weight' => t('Weight'),
