@@ -57,7 +57,7 @@ function multisite_redirect_admin_form($form, &$form_state) {
         'redirect' => array('#markup' => check_plain($rule->redirect)),
         'status_code' => array('#markup' => $status_codes[$rule->status_code]),
         'edit' => array('#markup' => l(t('edit'), 'admin/config/search/multisite-redirect/' . $rule->rid)),
-        'access' => array('#markup' => format_date($rule->access)),
+        'access' => array('#markup' => ($rule->access != 0) ? format_date($rule->access) : t('Never')),
         'count' => array('#markup' => $rule->count),
         'delete' => array('#markup' => l(t('delete'), 'admin/config/search/multisite-redirect/' . $rule->rid . '/delete', array(
             'query' => array(
