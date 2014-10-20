@@ -187,6 +187,7 @@ function multisite_redirect_get_sites($show_current = TRUE, $show_any = TRUE) {
   if (!$show_current) {
     unset($domains[$current['host']]);
   }
+  asort($domains);
   return $show_any ? array_merge(array('any' => t('any')), $domains) : $domains;
 }
 
