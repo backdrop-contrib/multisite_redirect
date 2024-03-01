@@ -10,23 +10,23 @@
 function multisite_redirect_settings_form($form, &$form_state) {
   global $base_url;
   $current = parse_url($base_url);
+  $form['#config'] = 'multisite_redirect.settings';
   $form['multisite_redirect_primary_site'] = array(
     '#type' => 'select',
     '#title' => t('Primary Site'),
     '#options' => multisite_redirect_get_sites(TRUE, FALSE),
     '#description' => t('Select the site to use when an absolute URL is not used in the redirect path.'),
-    '#default_value' => variable_get('multisite_redirect_primary_site', $current['host']),
+    '#default_value' => config_get('multisite_redirect.settings', 'multisite_redirect_primary_site'),
   );
   $form['multisite_redirect_exclusions'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Exclusions'),
     '#options' => multisite_redirect_get_sites(TRUE, FALSE),
     '#description' => t('Select which sites to exclude from redirects list.'),
-    '#default_value' => variable_get('multisite_redirect_exclusions', array($current['host'])),
+    '#default_value' => config_get('multisite_redirect.settings', 'multisite_redirect_exclusions'),
   );
   return system_settings_form($form);
 }
-
 /**
  * Delete form callback.
  */
@@ -45,7 +45,7 @@ function multisite_redirect_admin_form($form, &$form_state) {
   );
   $form['#rules'] = multisite_redirect_load_multiple();
   if (!empty($form['#rules'])) {
-    $status_codes = array(0 => t('Default (@default)', array('@default' => variable_get('redirect_default_status_code', 301)))) + redirect_status_code_options();
+    $status_codes = array(0 => t('Default (@default)', array('@default' => config_get('multisite_redirect.settings', 'redirect_default_status_code')))) + redirect_status_code_options();
     $form['multisite_redirect_rules_table'] = array(
       '#tree' => TRUE,
       '#theme' => 'multisite_redirect_rules_table',
@@ -135,7 +135,7 @@ function multisite_redirect_edit_form($form, &$form_state, $redirect = NULL) {
     '#description' => t('You can find more information about HTTP redirect status codes at <a href="@status-codes">@status-codes</a>.', array('@status-codes' => 'http://en.wikipedia.org/wiki/List_of_HTTP_status_codes#3xx_Redirection')),
     '#default_value' => $redirect->status_code,
     '#required' => TRUE,
-    '#options' => array(0 => t('Default (@default)', array('@default' => variable_get('redirect_default_status_code', 301)))) + redirect_status_code_options(),
+    '#options' => array(0 => t('Default (@default)', array('@default' => config_get('multisite_redirect.settings', 'redirect_default_status_code')))) + redirect_status_code_options(),
   );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(

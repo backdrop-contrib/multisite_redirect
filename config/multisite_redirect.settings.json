@@ -1,0 +1,6 @@
+{ 
+  "_config_name": "multisite_redirect.settings",
+  "multisite_redirect_exclusions": "NULL",
+  "multisite_redirect_primary_site": "NULL", 
+  "redirect_default_status_code": "301"
+}

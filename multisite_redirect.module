@@ -4,6 +4,16 @@
  * Contains main module functionality.
  */
 
+ /**
+ * Implements hook_config_info().
+ */
+function multisite_redirect_config_info() {
+  $prefixes['multisite_redirect.settings'] = array(
+    'label' => t('Multisite Redirect settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
 /**
  * Implements hook_help().
  */
@@ -47,7 +57,7 @@ function multisite_redirect_menu() {
     'title' => 'Multisite Redirects',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('administer multisite redirects'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_admin_form'),
     'file' => 'multisite_redirect.admin.inc',
   );
@@ -55,14 +65,14 @@ function multisite_redirect_menu() {
     'title' => 'List',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'access arguments' => array('administer multisite redirects'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_admin_form'),
     'file' => 'multisite_redirect.admin.inc',
   );
   $items['admin/config/search/multisite-redirect/settings'] = array(
     'title' => 'Settings',
     'type' => MENU_LOCAL_TASK,
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_settings_form'),
     'access arguments' => array('administer multisite redirects'),
     'file' => 'multisite_redirect.admin.inc',
@@ -71,7 +81,7 @@ function multisite_redirect_menu() {
     'title' => 'Edit Redirect',
     'type' => MENU_CALLBACK,
     'access arguments' => array('administer multisite redirects'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_edit_form', 4),
     'file' => 'multisite_redirect.admin.inc',
   );
@@ -79,7 +89,7 @@ function multisite_redirect_menu() {
     'title' => 'Add redirect',
     'type' => MENU_LOCAL_ACTION,
     'access arguments' => array('administer multisite redirects'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_edit_form'),
     'file' => 'multisite_redirect.admin.inc',
   );
@@ -87,7 +97,7 @@ function multisite_redirect_menu() {
     'title' => 'Delete Redirect',
     'type' => MENU_CALLBACK,
     'access arguments' => array('administer multisite redirects'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('multisite_redirect_delete_form', 4),
     'file' => 'multisite_redirect.admin.inc',
   );
@@ -100,14 +110,14 @@ function multisite_redirect_menu() {
 function multisite_redirect_init() {
   global $base_url;
   $current = parse_url($base_url);
-  $exclusions = variable_get('multisite_redirect_exclusions');
+  $exclusions = config_get('multisite_redirect.settings', 'multisite_redirect_exclusions');
   if ((isset($exclusions[$current['host']]) && $exclusions[$current['host']] === 0) || !isset($exclusions[$current['host']])) {
     $rules = multisite_redirect_get_rules();
     if (!empty($rules)) {
       foreach ($rules as $rule) {
-        $alias = drupal_lookup_path('alias', current_path());
-        if (drupal_match_path($alias, $rule->source_path) || drupal_match_path(current_path(), $rule->source_path)) {
-          drupal_alter('redirect_execute', $rule);
+        $alias = backdrop_lookup_path('alias', current_path());
+        if (backdrop_match_path($alias, $rule->source_path) || backdrop_match_path(current_path(), $rule->source_path)) {
+          backdrop_alter('redirect_execute', $rule);
           multisite_redirect_execute($rule);
           break;
         }
@@ -129,21 +139,21 @@ function multisite_redirect_execute($rule) {
     $rule->access = time();
     multisite_redirect_save($rule);
     if (valid_url($rule->redirect, TRUE)) {
-      drupal_goto($rule->redirect, array(), $status_code);
+      backdrop_goto($rule->redirect, array(), $status_code);
     }
     elseif (valid_url($rule->redirect)) {
-      $primary = variable_get('multisite_redirect_primary_site');
+      $primary = config_get('multisite_redirect.settings', 'multisite_redirect_primary_site');
       if (!empty($primary) && $rule->redirect != '*') {
-        drupal_goto('http://' . $primary . '/' . $rule->redirect, array(), $status_code);
+        backdrop_goto('http://' . $primary . '/' . $rule->redirect, array(), $status_code);
       }
       elseif (!empty($primary) && $rule->redirect == '*') {
-        $alias = drupal_lookup_path('alias', current_path());
-        drupal_goto('http://' . $primary . '/' . $alias, array(), $status_code);
+        $alias = backdrop_lookup_path('alias', current_path());
+        backdrop_goto('http://' . $primary . '/' . $alias, array(), $status_code);
       }
     }
     else {
       if (user_access('administer multisite redirects')) {
-        drupal_set_message(t('Unable to perform redirect rule, invalid redirect path <strong>%path</strong>.', array('%path' => check_plain($rule->redirect))), 'warning');
+        backdrop_set_message(t('Unable to perform redirect rule, invalid redirect path <strong>%path</strong>.', array('%path' => check_plain($rule->redirect))), 'warning');
       }
     }
   }
@@ -176,8 +186,8 @@ function multisite_redirect_get_sites($show_current = TRUE, $show_any = TRUE) {
   $conf_path = conf_path();
   $sites = array();
   $domains = array($current['host'] => $current['host']);
-  if (file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
-    include(DRUPAL_ROOT . '/sites/sites.php');
+  if (file_exists(BACKDROP_ROOT . '/sites/sites.php')) {
+    include(BACKDROP_ROOT . '/sites/sites.php');
   }
   foreach ($sites as $domain => $path) {
     if ('sites/' . $path == $conf_path) {
@@ -196,8 +206,8 @@ function multisite_redirect_get_sites($show_current = TRUE, $show_any = TRUE) {
  */
 function multisite_redirect_delete_form_submit($form, &$form_state) {
   multisite_redirect_delete($form['#redirect']->rid);
-  drupal_set_message(t('Redirect deleted.'));
-  drupal_goto('admin/config/search/multisite-redirect');
+  backdrop_set_message(t('Redirect deleted.'));
+  backdrop_goto('admin/config/search/multisite-redirect');
 }
 
 /**
@@ -230,8 +240,8 @@ function multisite_redirect_edit_form_submit($form, &$form_state) {
     'status_code' => $form_state['values']['status_code'],
   ));
   multisite_redirect_save((object) $redirect);
-  drupal_set_message(t('Redirect rule saved.'));
-  drupal_goto('admin/config/search/multisite-redirect');
+  backdrop_set_message(t('Redirect rule saved.'));
+  backdrop_goto('admin/config/search/multisite-redirect');
 }
 
 /**
@@ -270,7 +280,7 @@ function multisite_redirect_object_prepare($redirect, $defaults = array()) {
  *   A new query object for this connection.
  */
 function multisite_redirect_save($redirect) {
-  drupal_alter('redirect_rule', $redirect);
+  backdrop_alter('redirect_rule', $redirect);
   if (empty($redirect->rid)) {
     module_invoke_all('redirect_insert', $redirect);
     return db_insert('multisite_redirect')
@@ -378,7 +388,7 @@ function multisite_redirect_delete($rid) {
 function multisite_redirect_get_rules() {
   global $base_url;
   $current = parse_url($base_url);
-  $rules = &drupal_static(__FUNCTION__, multisite_redirect_load_by_site($current['host']));
+  $rules = &backdrop_static(__FUNCTION__, multisite_redirect_load_by_site($current['host']));
   return $rules;
 }
 
@@ -387,7 +397,7 @@ function multisite_redirect_get_rules() {
  */
 function theme_multisite_redirect_rules_table($vars) {
   $element = $vars['element'];
-  drupal_add_tabledrag('multisite-redirect-rules-table', 'order', 'sibling', 'attribute-weight');
+  backdrop_add_tabledrag('multisite-redirect-rules-table', 'order', 'sibling', 'attribute-weight');
 
   $header = array(
     'source_site' => t('Source Site'),
@@ -407,7 +417,7 @@ function theme_multisite_redirect_rules_table($vars) {
 
     $row['data'] = array();
     foreach ($header as $fieldname => $title) {
-      $row['data'][] = drupal_render($element[$key][$fieldname]);
+      $row['data'][] = backdrop_render($element[$key][$fieldname]);
       $row['class'] = array('draggable');
     }
     $rows[] = $row;

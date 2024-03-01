@@ -79,6 +79,20 @@ function multisite_redirect_schema() {
 function multisite_redirect_install() {
   global $base_url;
   $current = parse_url($base_url);
-  variable_set('multisite_redirect_primary_site', $current['host']);
-  variable_set('multisite_redirect_exclusions', array($current['host'] => $current['host']));
+  config_set('multisite_redirect.settings', 'multisite_redirect_primary_site', $current['host']);
+  config_set('multisite_redirect.settings', 'multisite_redirect_exclusions', array($current['host'] => $current['host']));
+}
+
+
+function multisite_redirect_update_1000() {
+  $config = config('multisite_redirect.settings');
+  $config->set('multisite_redirect_exclusions', update_variable_get('multisite_redirect_exclusions', NULL));
+  $config->set('multisite_redirect_primary_site', update_variable_get('multisite_redirect_primary_site', NULL));
+  $config->set('redirect_default_status_code', update_variable_get('redirect_default_status_code', 301));
+  $config->save();
+
+    // Delete variables.
+  update_variable_del('multisite_redirect_exclusions');
+  update_variable_del('multisite_redirect_primary_site');
+  update_variable_del('redirect_default_status_code');
 }

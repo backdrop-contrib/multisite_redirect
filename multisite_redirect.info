@@ -1,7 +1,6 @@
+type = module
 name = Multisite Redirect
 description = Provides the system for creating URL redirect rules across multiple domains in a multisite install.
-core = 7.x
-
+backdrop = 1.x
 dependencies[] = redirect
-
 configure = admin/config/search/multisite-redirect
