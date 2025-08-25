@@ -281,14 +281,15 @@ function multisite_redirect_object_prepare($redirect, $defaults = array()) {
  */
 function multisite_redirect_save($redirect) {
   backdrop_alter('redirect_rule', $redirect);
+  $redirect_object = new Redirect((array) $redirect);
   if (empty($redirect->rid)) {
-    module_invoke_all('redirect_insert', $redirect);
+    module_invoke_all('redirect_insert', $redirect_object);
     return db_insert('multisite_redirect')
       ->fields((array) $redirect)
       ->execute();
     }
   else {
-    module_invoke_all('redirect_update', $redirect);
+    module_invoke_all('redirect_update', $redirect_object);
     return db_update('multisite_redirect')
       ->fields((array) $redirect)
       ->condition('rid', $redirect->rid)
