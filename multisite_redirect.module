@@ -190,7 +190,7 @@ function multisite_redirect_get_sites($show_current = TRUE, $show_any = TRUE) {
     include(BACKDROP_ROOT . '/sites/sites.php');
   }
   foreach ($sites as $domain => $path) {
-    if ('sites/' . $path == $conf_path) {
+    if ('./sites/' . $path == $conf_path) {
       $domains[$domain] = $domain;
     }
   }
